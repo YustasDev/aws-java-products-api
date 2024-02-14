@@ -93,7 +93,7 @@ public class ResolveUser implements RequestHandler<APIGatewayV2HTTPEvent, ApiGat
                                 String customerIdentifier_value, String productCode_value,
                                 String customerAWSAccountId_value) {
 
-        HashMap<String, AttributeValue> itemValues = new HashMap<>();
+        Map<String, AttributeValue> itemValues = new HashMap<>();
         itemValues.put(customerIdentifier, AttributeValue.builder().s(customerIdentifier_value).build());
         itemValues.put(productCode, AttributeValue.builder().s(productCode_value).build());
         itemValues.put(customerAWSAccountId, AttributeValue.builder().s(customerAWSAccountId_value).build());
