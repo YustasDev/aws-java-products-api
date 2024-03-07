@@ -12,3 +12,5 @@ target
 
 # Serverless directories
 .serverless
+.serverless-offline
+aws

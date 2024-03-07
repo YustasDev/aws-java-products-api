@@ -5,7 +5,7 @@ custom:
 
 provider:
   name: aws
-  runtime: java8
+  runtime: java11
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-east-1'}
   iamRoleStatements:
@@ -19,6 +19,16 @@ provider:
         - dynamodb:DeleteItem
       Resource:
         - { "Fn::GetAtt": ["ProductsDynamoDBTable", "Arn" ] }
+
+    - Effect: Allow
+      Action:
+        - sns:ListTopics
+        - sns:ListSubscriptions
+        - sns:Publish
+        - sns:CreateTopic
+        - sns:Subscribe
+      Resource: '*'
+
   environment:
     PRODUCTS_TABLE_NAME: ${self:custom.productsTableName}
 
@@ -32,18 +42,21 @@ functions:
       - http:
           path: /products
           method: get
+
   getProduct:
     handler: com.serverless.GetProductHandler
     events:
       - http:
           path: /products/{id}
           method: get
+
   createProduct:
     handler: com.serverless.CreateProductHandler
     events:
       - http:
           path: /products
           method: post
+
   deleteProduct:
     handler: com.serverless.DeleteProductHandler
     events:

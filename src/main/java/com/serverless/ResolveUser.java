@@ -5,15 +5,24 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent;
+import com.amazonaws.services.marketplaceentitlement.AWSMarketplaceEntitlement;
+import com.amazonaws.services.marketplaceentitlement.AWSMarketplaceEntitlementClient;
+import com.amazonaws.services.marketplaceentitlement.AWSMarketplaceEntitlementClientBuilder;
+import com.amazonaws.services.marketplaceentitlement.model.GetEntitlementsRequest;
+import com.amazonaws.services.marketplaceentitlement.model.GetEntitlementsResult;
 import com.amazonaws.services.marketplacemetering.AWSMarketplaceMeteringClient;
 import com.amazonaws.services.marketplacemetering.model.ResolveCustomerRequest;
 import com.amazonaws.services.marketplacemetering.model.ResolveCustomerResult;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.*;
+import software.amazon.awssdk.services.greengrass.model.Logger;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,6 +30,8 @@ import java.util.Map;
 public class ResolveUser implements RequestHandler<APIGatewayV2HTTPEvent, ApiGatewayResponse> {
 
     private AWSMarketplaceMeteringClient marketplaceClient;
+
+    //Logger log = Logger.builder().build();
 
     @Override
     public ApiGatewayResponse handleRequest(APIGatewayV2HTTPEvent gatewayV2HTTPEvent, Context context) {
@@ -44,6 +55,7 @@ public class ResolveUser implements RequestHandler<APIGatewayV2HTTPEvent, ApiGat
             token = gatewayV2HTTPEvent.getQueryStringParameters().get("x-amzn-marketplace-token");
             //token = body.get("x-amzn-marketplace-token").asText("default");
             //token = request.getRegistrationToken();
+            log.log("token is: " + token);
 
             if(token != null){
                 marketplaceClient = new AWSMarketplaceMeteringClient();
@@ -60,16 +72,37 @@ public class ResolveUser implements RequestHandler<APIGatewayV2HTTPEvent, ApiGat
             }
 
             // saving customer data in DynamoDB
-            Region region = Region.US_EAST_2;
+            Region region = Region.US_EAST_1;
             DynamoDbClient ddb = DynamoDbClient.builder()
                     .region(region)
                     .build();
 
             putItemInTable(ddb, tableName,  customerIdentifier, productCode, customerAWSAccountId,
                            customerIdentifier_value, productCode_value, customerAWSAccountId_value);
-            System.out.println("A client with customerAWSAccountId = "
-                               + customerAWSAccountId + " has been recorded in DynamoDB table: " + tableName);
+            System.out.println("A client with customerID = "
+                               + customerIdentifier_value + " has been recorded in DynamoDB table: " + tableName);
             ddb.close();
+
+
+            // https://docs.aws.amazon.com/marketplace/latest/userguide/saas-integrate-contract.html
+            //
+            GetEntitlementsRequest entitlementsRequest = new GetEntitlementsRequest();
+            entitlementsRequest.setProductCode(customerIdentifier_value);
+            AWSMarketplaceEntitlement clientBuilder = AWSMarketplaceEntitlementClientBuilder.standard().build();
+            GetEntitlementsResult entitlementsResult = clientBuilder.getEntitlements(entitlementsRequest);
+            // =========================================================================================<
+
+
+
+
+
+
+
+
+
+
+
+
 
 
         }
@@ -93,10 +126,12 @@ public class ResolveUser implements RequestHandler<APIGatewayV2HTTPEvent, ApiGat
                                 String customerIdentifier_value, String productCode_value,
                                 String customerAWSAccountId_value) {
 
+        String timeStamp = new SimpleDateFormat("MM/dd/yyyy_HH:mm:ss").format(Calendar.getInstance().getTime());
         Map<String, AttributeValue> itemValues = new HashMap<>();
         itemValues.put(customerIdentifier, AttributeValue.builder().s(customerIdentifier_value).build());
         itemValues.put(productCode, AttributeValue.builder().s(productCode_value).build());
         itemValues.put(customerAWSAccountId, AttributeValue.builder().s(customerAWSAccountId_value).build());
+        itemValues.put("timeStamp", AttributeValue.builder().s(timeStamp).build());
 
         PutItemRequest request = PutItemRequest.builder()
                 .tableName(tableName)
