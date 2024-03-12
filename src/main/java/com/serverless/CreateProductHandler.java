@@ -5,7 +5,11 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import software.amazon.awssdk.core.waiters.WaiterResponse;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+import software.amazon.awssdk.services.dynamodb.model.*;
+import software.amazon.awssdk.services.dynamodb.waiters.DynamoDbWaiter;
 import software.amazon.awssdk.services.sns.SnsClient;
 import software.amazon.awssdk.services.sns.model.*;
 import software.amazon.awssdk.services.sns.paginators.ListTopicsIterable;
@@ -28,8 +32,11 @@ public class CreateProductHandler implements RequestHandler<Map<String, Object>,
     public ApiGatewayResponse handleRequest(Map<String, Object> input, Context context) {
 
         try {
+            Region region = Region.US_EAST_1;
+
+    // ======================================================================
             SnsClient snsClient = SnsClient.builder()
-                    .region(Region.US_EAST_1)
+                    .region(region)
                     .build();
 
             System.out.println("SNS_Client = " + snsClient.toString());
@@ -79,6 +86,9 @@ public class CreateProductHandler implements RequestHandler<Map<String, Object>,
                     .build();
         }
     }
+
+
+
 
     public static void listSNSTopics(SnsClient snsClient) {
         ListTopicsIterable listTopics = null;

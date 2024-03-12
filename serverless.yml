@@ -9,16 +9,16 @@ provider:
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-east-1'}
   iamRoleStatements:
-    - Effect: Allow
-      Action:
-        - dynamodb:Query
-        - dynamodb:Scan
-        - dynamodb:GetItem
-        - dynamodb:PutItem
-        - dynamodb:UpdateItem
-        - dynamodb:DeleteItem
-      Resource:
-        - { "Fn::GetAtt": ["ProductsDynamoDBTable", "Arn" ] }
+#    - Effect: Allow
+#      Action:
+#        - dynamodb:Query
+#          - dynamodb:Scan
+#          - dynamodb:GetItem
+#          - dynamodb:PutItem
+#          - dynamodb:UpdateItem
+#          - dynamodb:DeleteItem
+#      Resource:
+#        - { "Fn::GetAtt": ["ProductsDynamoDBTable", "Arn" ] }
 
     - Effect: Allow
       Action:
@@ -27,6 +27,18 @@ provider:
         - sns:Publish
         - sns:CreateTopic
         - sns:Subscribe
+      Resource: '*'
+
+    - Effect: Allow
+      Action:
+        - dynamodb:CreateTable
+        - dynamodb:DescribeTable
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
       Resource: '*'
 
   environment:
@@ -63,6 +75,14 @@ functions:
       - http:
           path: /products/{id}
           method: delete
+
+  createNewTable:
+    handler: com.serverless.CreateNewTable
+    events:
+      - http:
+          path: /create_table
+          method: get
+
 
 resources:
   Resources:
