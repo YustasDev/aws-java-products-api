@@ -90,6 +90,13 @@ functions:
           path: /putItem
           method: post
 
+  ScanItems:
+    handler: com.serverless.ScanItems
+    events:
+      - http:
+          path: /scanItems
+          method: post
+
 
 resources:
   Resources:
