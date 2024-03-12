@@ -83,6 +83,13 @@ functions:
           path: /create_table
           method: get
 
+  PutItem:
+    handler: com.serverless.PutItem
+    events:
+      - http:
+          path: /putItem
+          method: post
+
 
 resources:
   Resources:
